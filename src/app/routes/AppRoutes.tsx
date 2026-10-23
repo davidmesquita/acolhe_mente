@@ -12,6 +12,9 @@ import { ProfessionalsPage } from '../../features/professionals/ProfessionalsPag
 import { ProfessionalProfilePage } from '../../features/professionals/ProfessionalProfilePage'
 import { PrivacyPage } from '../../features/legal/PrivacyPage'
 import { VideoSessionPage } from '../../features/video-session/VideoSessionPage'
+import { ProtectedRoute } from './ProtectedRoute'
+import { DemoPatientDashboardPage } from '../../features/patient/DemoPatientDashboardPage'
+import { DemoPsychologistDashboardPage } from '../../features/psychologist/DemoPsychologistDashboardPage'
 
 export function AppRoutes() {
   return (
@@ -24,8 +27,16 @@ export function AppRoutes() {
         <Route path="/agendar/:professionalId" element={<AppointmentsPage />} />
         <Route path="/entrar" element={<AccountPage />} />
         <Route path="/cadastro" element={<AccountPage />} />
-        <Route path="/paciente" element={<PatientDashboardPage />} />
-        <Route path="/psicologo" element={<PsychologistDashboardPage />} />
+        <Route path="/esqueci-senha" element={<AccountPage />} />
+        <Route path="/recuperar-senha" element={<AccountPage />} />
+        <Route path="/demonstracao/paciente" element={<DemoPatientDashboardPage />} />
+        <Route path="/demonstracao/psicologo" element={<DemoPsychologistDashboardPage />} />
+        <Route element={<ProtectedRoute role="patient" />}>
+          <Route path="/paciente" element={<PatientDashboardPage />} />
+        </Route>
+        <Route element={<ProtectedRoute role="psychologist" />}>
+          <Route path="/psicologo" element={<PsychologistDashboardPage />} />
+        </Route>
         <Route path="/acessibilidade" element={<AccessibilityPage />} />
         <Route path="/ajuda" element={<HelpPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />

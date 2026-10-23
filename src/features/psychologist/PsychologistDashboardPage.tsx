@@ -1,66 +1,142 @@
-import { StatusBadge } from '../../components/ui/StatusBadge'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Button } from '../../components/ui/Button'
+import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
+import { useAuth } from '../../app/providers/useAuth'
+import { getProfessionalProfile, saveProfessionalProfile } from '../auth/authService'
+import type { ProfessionalProfile } from '../../types/database'
 
-const agenda = [
-  {
-    time: '09:00',
-    name: 'Camila R.',
-    mode: 'Online · Legendas solicitadas',
-    status: 'confirmed' as const,
-    label: 'Confirmado',
-  },
-  {
-    time: '11:30',
-    name: 'Rafael M.',
-    mode: 'Online · Comunicação por texto',
-    status: 'pending' as const,
-    label: 'Aguardando confirmação',
-  },
-  {
-    time: '15:00',
-    name: 'Joana P.',
-    mode: 'Online · Atendimento demonstrativo',
-    status: 'demo' as const,
-    label: 'Exemplo',
-  },
-]
-
+const emptyProfile: Pick<
+  ProfessionalProfile,
+  'presentation' | 'specialties' | 'registration_number' | 'accessibility_modalities'
+> = { presentation: '', specialties: [], registration_number: null, accessibility_modalities: [] }
 export function PsychologistDashboardPage() {
+  const auth = useAuth()
+  const [profile, setProfile] = useState(emptyProfile)
+  const [verificationStatus, setVerificationStatus] = useState('pendente')
+  const [specialties, setSpecialties] = useState('')
+  const [modalities, setModalities] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [success, setSuccess] = useState('')
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let active = true
+    void getProfessionalProfile(auth.user!.id)
+      .then((data) => {
+        if (!active || !data) return
+        setProfile(data)
+        setVerificationStatus(data.verification_status)
+        setSpecialties(data.specialties.join(', '))
+        setModalities(data.accessibility_modalities.join(', '))
+      })
+      .catch((cause: unknown) => {
+        if (active)
+          setError(cause instanceof Error ? cause.message : 'Não foi possível carregar seu perfil.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [auth.user])
+  async function save(event: FormEvent) {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+    try {
+      setProfile(
+        await saveProfessionalProfile({
+          ...profile,
+          specialties: specialties
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .slice(0, 20),
+          accessibility_modalities: modalities
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .slice(0, 20),
+        }),
+      )
+      setSuccess('Perfil salvo como não verificado.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível salvar.')
+    }
+  }
+  async function logout() {
+    try {
+      await auth.logout()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível sair.')
+    }
+  }
   return (
     <section className="section inner-page dashboard-page">
-      <span className="eyebrow">Área do psicólogo · demonstração</span>
-      <h1>
-        Sua agenda,
-        <br />
-        <em>com mais cuidado.</em>
-      </h1>
+      <span className="eyebrow">Área profissional</span>
+      <h1>Seu perfil profissional</h1>
       <p className="page-intro">
-        Uma visualização de exemplo para a área profissional. Nenhum paciente ou horário é real.
+        Mantenha informações de apresentação e acessibilidade atualizadas.
       </p>
-      <Notice title="Agenda fictícia">
-        Os nomes e as preferências são inventados. Esta tela não recebe nem armazena dados de
-        pacientes.
+      <Notice title={`Verificação: ${verificationStatus}`}>
+        O status é somente leitura para profissionais. A verificação depende de revisão
+        administrativa.
       </Notice>
-      <div className="agenda-toolbar">
-        <h2>Quarta-feira, 28 de outubro</h2>
-        <span>Horários locais · demonstração</span>
-      </div>
-      <div className="agenda-list">
-        {agenda.map((item) => (
-          <article className="agenda-row" key={item.time}>
-            <time>{item.time}</time>
-            <div className="agenda-line" aria-hidden="true"></div>
-            <div className="agenda-content">
-              <h3>
-                {item.name} <span>· perfil fictício</span>
-              </h3>
-              <p>{item.mode}</p>
-            </div>
-            <StatusBadge status={item.status}>{item.label}</StatusBadge>
-          </article>
-        ))}
-      </div>
-      <p className="field-hint">Não use esta página para coordenar atendimentos reais.</p>
+      {success && (
+        <Notice title="Tudo certo" kind="success">
+          {success}
+        </Notice>
+      )}
+      {error && (
+        <Notice title="Não foi possível concluir" kind="error">
+          {error}
+        </Notice>
+      )}
+      {loading ? (
+        <p role="status">Carregando seu perfil…</p>
+      ) : (
+        <form className="auth-form" onSubmit={(event) => void save(event)}>
+          <div className="form-field">
+            <label htmlFor="presentation">Apresentação</label>
+            <textarea
+              id="presentation"
+              rows={5}
+              maxLength={2000}
+              value={profile.presentation}
+              onChange={(event) => setProfile({ ...profile, presentation: event.target.value })}
+            />
+            <p className="field-hint">Não inclua informações de pacientes ou dados clínicos.</p>
+          </div>
+          <FormField
+            label="Especialidades (separadas por vírgula)"
+            name="specialties"
+            value={specialties}
+            maxLength={500}
+            onChange={(event) => setSpecialties(event.target.value)}
+          />
+          <FormField
+            label="Registro profissional (opcional)"
+            name="registration"
+            value={profile.registration_number ?? ''}
+            maxLength={100}
+            onChange={(event) =>
+              setProfile({ ...profile, registration_number: event.target.value || null })
+            }
+          />
+          <FormField
+            label="Modalidades de acessibilidade (separadas por vírgula)"
+            name="modalities"
+            value={modalities}
+            maxLength={500}
+            onChange={(event) => setModalities(event.target.value)}
+          />
+          <Button type="submit">Salvar perfil</Button>
+          <Button type="button" variant="quiet" onClick={() => void logout()}>
+            Sair da conta
+          </Button>
+        </form>
+      )}
     </section>
   )
 }

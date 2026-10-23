@@ -1,0 +1,2 @@
+[functions.admin-professional-management]
+verify_jwt = false
