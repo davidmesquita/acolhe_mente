@@ -1,0 +1,2 @@
+-- Sem seed por padrão: este projeto não conecta a um banco de dados.
+-- Utilize apenas dados sintéticos caso uma etapa futura adicione ambiente local.
