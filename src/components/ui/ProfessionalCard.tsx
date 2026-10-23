@@ -4,7 +4,11 @@ import { ButtonLink } from './ButtonLink'
 export function ProfessionalCard({ professional }: { professional: Professional }) {
   return (
     <article className="professional-card">
-      <div className={`portrait portrait-${professional.color}`} aria-hidden="true">
+      <div
+        className={`portrait portrait-${professional.color}`}
+        role="img"
+        aria-label={`Ilustração abstrata de ${professional.name}; perfil fictício`}
+      >
         <span>{professional.initials}</span>
       </div>
       <div className="professional-info">
@@ -13,9 +17,12 @@ export function ProfessionalCard({ professional }: { professional: Professional 
         <p>{professional.description}</p>
         <div className="card-bottom">
           <span className="price">
-            R$ 50 <small>/ sessão</small>
+            R$ 50 <small>/ sessão · demonstração</small>
           </span>
-          <ButtonLink to="/agendar" aria-label={`Agendar sessão com ${professional.name}`}>
+          <ButtonLink
+            to={`/profissionais/${professional.id}`}
+            aria-label={`Ver perfil de demonstração de ${professional.name}`}
+          >
             Conhecer <span aria-hidden="true">↗</span>
           </ButtonLink>
         </div>

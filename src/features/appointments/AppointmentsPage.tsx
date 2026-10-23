@@ -1,33 +1,71 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { CalendarPicker } from '../../components/ui/CalendarPicker'
+import { Notice } from '../../components/ui/Notice'
+import { professionals } from '../professionals/data'
 
 export function AppointmentsPage() {
+  const { professionalId } = useParams()
+  const person = professionals.find((candidate) => candidate.id === professionalId)
+  const [selection, setSelection] = useState('')
   return (
-    <section className="section inner-page">
-      <span className="eyebrow">Um primeiro passo, sem pressa</span>
+    <section className="section inner-page booking-page">
+      <span className="eyebrow">Agendamento demonstrativo</span>
       <h1>
-        Vamos encontrar
+        Escolha com calma
         <br />
-        <em>um horário?</em>
+        <em>um bom momento.</em>
       </h1>
       <p className="page-intro">
-        O agendamento online ainda não está conectado. Esta versão de demonstração não solicita nem
-        armazena informações pessoais.
+        Nenhuma solicitação será enviada ou armazenada. Datas e horários abaixo são exemplos locais.
       </p>
-      <div className="info-panel">
-        <span className="panel-icon" aria-hidden="true">
-          ✳
-        </span>
+      <div className="booking-layout">
         <div>
-          <h2>Como será o próximo passo</h2>
-          <p>
-            Em uma versão futura, você poderá escolher um profissional e consultar horários
-            disponíveis. Sessões demonstrativas: R$ 50.
-          </p>
-          <NavLink className="text-link" to="/profissionais">
-            Conhecer os perfis fictícios <span aria-hidden="true">↗</span>
-          </NavLink>
+          {person ? (
+            <div className="booking-person">
+              <span className={`mini-portrait portrait-${person.color}`}>{person.initials}</span>
+              <div>
+                <span className="eyebrow">Profissional fictício</span>
+                <h2>{person.name}</h2>
+                <p>{person.focus}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="booking-prompt">
+              <h2>Escolha um profissional</h2>
+              <Link to="/profissionais" className="text-link">
+                Ver perfis de demonstração ↗
+              </Link>
+            </div>
+          )}
+          <div className="booking-price">
+            <span>Valor social demonstrativo</span>
+            <strong>
+              R$ 50 <small>/ sessão</small>
+            </strong>
+          </div>
+          <CalendarPicker onSelect={(date, time) => setSelection(`${date} às ${time}`)} />
         </div>
+        <aside className="booking-aside">
+          <span className="aside-icon" aria-hidden="true">
+            ♡
+          </span>
+          <h2>Seu espaço, no seu ritmo</h2>
+          <p>
+            Esta tela mostra apenas a experiência de escolha de horário. Ainda não existe
+            confirmação de consulta, pagamento ou conexão clínica.
+          </p>
+          <p>Não compartilhe dados pessoais ou informações sobre saúde nesta demonstração.</p>
+          <Link to="/ajuda" className="text-link">
+            Precisa de ajuda? ↗
+          </Link>
+        </aside>
       </div>
+      {selection && (
+        <Notice kind="success" title="Horário selecionado para demonstração">
+          Você escolheu {selection}. Nenhum agendamento foi realizado.
+        </Notice>
+      )}
     </section>
   )
 }

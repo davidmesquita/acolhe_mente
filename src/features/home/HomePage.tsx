@@ -27,7 +27,7 @@ export function HomePage() {
         <div className="hero-inner">
           <div className="hero-copy">
             <div className="hero-kicker">
-              <span className="sparkle">✳</span> Cuidado que cabe na sua vida
+              <span className="sparkle">✳</span> Plataforma em demonstração
             </div>
             <h1>
               Você merece um lugar para <em>se escutar.</em>
@@ -41,7 +41,7 @@ export function HomePage() {
                 Encontrar meu espaço <span aria-hidden="true">↗</span>
               </NavLink>
               <span className="hero-price">
-                <strong>R$ 50</strong> por sessão
+                <strong>R$ 50</strong> por sessão · valor demonstrativo
               </span>
             </div>
             <div className="hero-note">
@@ -88,13 +88,13 @@ export function HomePage() {
       <section className="trust-strip" aria-label="Benefícios">
         <div className="trust-inner">
           <span>
-            <b>✳</b> Sessões online
+            <b>✳</b> Formato previsto: online
           </span>
           <span>
             <b>♡</b> Acolhimento para todos
           </span>
           <span>
-            <b>◎</b> Valor social: R$ 50
+            <b>◎</b> Valor de referência: R$ 50
           </span>
         </div>
       </section>

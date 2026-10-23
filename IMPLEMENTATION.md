@@ -1,5 +1,13 @@
 # Registro de implementação
 
+## Interface responsiva — 23/10/2026
+
+- Mantida a fundação Vite/React/TypeScript e o sistema visual original; criados menu mobile, rodapé navegável e componentes compartilhados de formulário, filtros, calendário, avisos, estados e status.
+- Implementadas as rotas para início, busca filtrável, perfil fictício, seleção local de data/horário, páginas informativas de acesso/cadastro, áreas demonstrativas de paciente e psicólogo, acessibilidade, ajuda e rascunho de privacidade.
+- Dados de profissionais, disponibilidade, agendas, status e recursos são fictícios. Não há credenciais, avaliações, pagamentos, backend, autenticação nem coleta de informações clínicas.
+- Tipografia usa fontes locais do sistema; a interface não faz chamadas a um serviço externo de fontes.
+- Incluídos testes unitários da filtragem de profissionais; os testes end-to-end continuam pendentes.
+
 ## Fundação inicial — 23/10/2026
 
 - Criada aplicação Vite com React e TypeScript estrito em repositório sem arquivos de aplicação.
@@ -12,12 +20,12 @@
 ## Verificações
 
 - `pnpm install --offline`: concluído; script de instalação do `esbuild` permitido de forma explícita.
-- `tsc -b --pretty`: passou, sem erros de TypeScript.
+- TypeScript `tsc -b --pretty`: passou, sem erros.
 - ESLint: passou, sem erros ou avisos.
-- Vitest: 1 teste unitário passou (formatação de R$ 50); o runner exibiu aviso de encerramento demorado do processo após os testes concluírem.
+- Vitest: 4 testes unitários passaram em 2 arquivos (formatação e filtros locais); o runner exibiu aviso de encerramento demorado após a conclusão.
 - Prettier `--check .`: passou.
 - Vite `build`: passou; bundle de produção gerado em `dist/`.
-- Vite dev server: iniciou em `http://127.0.0.1:5173/` e preview em `http://127.0.0.1:4173/`. A tentativa de confirmar as respostas HTTP foi bloqueada pelo ambiente de execução; os processos foram encerrados após a checagem.
+- O servidor Vite iniciou localmente. A verificação HTTP e a validação visual em navegador não foram concluídas neste ambiente.
 
 ## Pendências
 
@@ -25,5 +33,5 @@
 - Fluxo real de agendamento e disponibilidade.
 - Serviço de videochamada e legendas.
 - Fluxo de pagamento, explicitamente fora do escopo desta fundação.
-- Estratégia de testes end-to-end.
+- Estratégia de testes end-to-end e validação automatizada dos breakpoints em navegador.
 - Investigar o aviso de encerramento do Vitest no ambiente local.
