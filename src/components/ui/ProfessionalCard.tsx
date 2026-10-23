@@ -16,9 +16,7 @@ export function ProfessionalCard({ professional }: { professional: Professional 
         <h3>{professional.name}</h3>
         <p>{professional.description}</p>
         <div className="card-bottom">
-          <span className="price">
-            R$ 50 <small>/ sessão · demonstração</small>
-          </span>
+          <span className="price">Perfil fictício</span>
           <ButtonLink
             to={`/profissionais/${professional.id}`}
             aria-label={`Ver perfil de demonstração de ${professional.name}`}

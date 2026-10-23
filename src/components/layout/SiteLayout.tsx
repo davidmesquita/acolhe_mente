@@ -88,7 +88,7 @@ export function SiteLayout() {
             <NavLink to="/paciente">Área do paciente</NavLink>
             <NavLink to="/psicologo">Área profissional</NavLink>
           </nav>
-          <span className="footer-note">Projeto demonstrativo · Dados fictícios</span>
+          <span className="footer-note">Perfis demonstrativos separados da agenda real</span>
         </div>
       </footer>
     </div>

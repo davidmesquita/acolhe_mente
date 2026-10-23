@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 const questions = [
   {
     question: 'O atendimento já pode ser agendado?',
-    answer: 'Ainda não. A página de horários é uma demonstração local e não reserva consultas.',
+    answer: 'Sim, quando o Supabase está conectado: pacientes podem solicitar horários reais de profissionais verificados. O atendimento fica pendente até a confirmação do profissional.',
   },
   {
     question: 'Os profissionais e valores são reais?',
     answer:
-      'Não. Todos os perfis, horários e recursos são fictícios. O preço de R$ 50 é uma referência demonstrativa do produto.',
+      'Os perfis identificados como demonstração são fictícios. Profissionais verificados têm agenda reservável, e o valor social configurado pelo sistema aparece antes da solicitação.',
   },
   {
     question: 'Posso falar sobre uma questão de saúde aqui?',
@@ -31,7 +31,7 @@ export function HelpPage() {
         <br />
         <em>clareza e calma.</em>
       </h1>
-      <p className="page-intro">Respostas sobre esta versão de demonstração do AcolheMente.</p>
+      <p className="page-intro">Respostas sobre a agenda e os recursos disponíveis no AcolheMente.</p>
       <div className="faq-list">
         {questions.map((item) => (
           <details key={item.question}>
@@ -46,8 +46,7 @@ export function HelpPage() {
       <div className="help-contact">
         <h2>Precisa de mais informação?</h2>
         <p>
-          O canal de suporte ainda está em preparação. Nenhuma mensagem será solicitada ou coletada
-          por esta demonstração.
+          O canal de suporte ainda está em preparação. Não informe dados clínicos nesta plataforma.
         </p>
         <Link className="text-link" to="/acessibilidade">
           Consultar acessibilidade ↗

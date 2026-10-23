@@ -5,6 +5,20 @@ import { Notice } from '../../components/ui/Notice'
 import { useAuth } from '../../app/providers/useAuth'
 import { getProfessionalProfile, saveProfessionalProfile } from '../auth/authService'
 import type { ProfessionalProfile } from '../../types/database'
+import type { AppointmentSummary } from '../../types/database'
+import { ProfessionalScheduleEditor } from '../appointments/ProfessionalScheduleEditor'
+import { getMyAppointments, schedulingErrorMessage, updateAppointmentStatus } from '../appointments/schedulingService'
+
+const appointmentStatusLabels = {
+  requested: 'Solicitado',
+  confirmed: 'Confirmado',
+  cancelled: 'Cancelado',
+  completed: 'Concluído',
+} as const
+
+function formatProfessionalDate(value: string, timezone: string | null, options: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: timezone ?? undefined, ...options }).format(new Date(value))
+}
 
 const emptyProfile: Pick<
   ProfessionalProfile,
@@ -19,6 +33,9 @@ export function PsychologistDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
+  const [appointments, setAppointments] = useState<AppointmentSummary[]>([])
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true)
+  const [appointmentAction, setAppointmentAction] = useState('')
   useEffect(() => {
     let active = true
     void getProfessionalProfile(auth.user!.id)
@@ -40,6 +57,22 @@ export function PsychologistDashboardPage() {
       active = false
     }
   }, [auth.user])
+  useEffect(() => {
+    let active = true
+    void getMyAppointments()
+      .then((data) => {
+        if (active) setAppointments(data)
+      })
+      .catch((cause: unknown) => {
+        if (active) setError(schedulingErrorMessage(cause))
+      })
+      .finally(() => {
+        if (active) setAppointmentsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
   async function save(event: FormEvent) {
     event.preventDefault()
     setError('')
@@ -70,6 +103,20 @@ export function PsychologistDashboardPage() {
       await auth.logout()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível sair.')
+    }
+  }
+  async function updateAppointment(id: string, status: 'confirmed' | 'cancelled' | 'completed') {
+    setAppointmentAction(id)
+    setError('')
+    setSuccess('')
+    try {
+      await updateAppointmentStatus(id, status)
+      setAppointments(await getMyAppointments())
+      setSuccess('Status do atendimento atualizado.')
+    } catch (cause) {
+      setError(schedulingErrorMessage(cause))
+    } finally {
+      setAppointmentAction('')
     }
   }
   return (
@@ -137,6 +184,38 @@ export function PsychologistDashboardPage() {
           </Button>
         </form>
       )}
+      <section className="professional-agenda" aria-labelledby="professional-agenda-heading">
+        <h2 className="subheading" id="professional-agenda-heading">Minha agenda</h2>
+        {appointmentsLoading ? <p role="status">Carregando atendimentos...</p> : appointments.length ? (
+          <div className="agenda-list">
+            {appointments.map((appointment) => (
+              <article className="appointment-row" key={appointment.id}>
+                <div className="appointment-date">
+                  <strong>{formatProfessionalDate(appointment.starts_at, appointment.timezone, { day: '2-digit' })}</strong>
+                  <span>{formatProfessionalDate(appointment.starts_at, appointment.timezone, { month: 'short' })}</span>
+                </div>
+                <div className="agenda-content">
+                  <h3>{appointment.other_party_name}</h3>
+                  <p>{formatProfessionalDate(appointment.starts_at, appointment.timezone, { dateStyle: 'short', timeStyle: 'short' })} · {appointment.duration_minutes} min</p>
+                </div>
+                <span className={`status-badge status-${appointment.status}`}>{appointmentStatusLabels[appointment.status]}</span>
+                <div className="agenda-actions">
+                  {appointment.status === 'requested' && (
+                    <Button type="button" disabled={appointmentAction === appointment.id} onClick={() => void updateAppointment(appointment.id, 'confirmed')}>Confirmar</Button>
+                  )}
+                  {['requested', 'confirmed'].includes(appointment.status) && (
+                    <Button type="button" variant="quiet" disabled={appointmentAction === appointment.id} onClick={() => void updateAppointment(appointment.id, 'cancelled')}>Cancelar</Button>
+                  )}
+                  {appointment.status === 'confirmed' && new Date(appointment.ends_at) <= new Date() && (
+                    <Button type="button" variant="secondary" disabled={appointmentAction === appointment.id} onClick={() => void updateAppointment(appointment.id, 'completed')}>Concluir</Button>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : <p className="muted-copy">Nenhum atendimento na agenda.</p>}
+      </section>
+      <ProfessionalScheduleEditor />
     </section>
   )
 }

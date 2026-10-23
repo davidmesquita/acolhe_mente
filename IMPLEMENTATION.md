@@ -1,5 +1,17 @@
 # Registro de implementação
 
+## Agenda e agendamentos — 24/10/2026
+
+- Criada migração aditiva para disponibilidade semanal, fuso IANA, exceções/bloqueios, configurações centralizadas, agendamentos e estados `requested`, `confirmed`, `cancelled` e `completed`.
+- A reserva é uma RPC transacional com identidade do paciente derivada da sessão, preço/duração lidos no banco, chave idempotente e trava por profissional. Constraint GiST exclui intervalos sobrepostos ativos e protege também contra corrida concorrente.
+- Cancelamento aplica janela configurável; reagendamento cancela e reserva na mesma transação. Psicólogos confirmam, concluem após o término ou cancelam seus próprios atendimentos.
+- Adicionada consulta pública somente de horários de profissionais verificados, RLS para dados de agenda, leitura de agendamentos apenas por participantes e grants sem escrita direta de agendamento pelo cliente.
+- A interface consulta profissionais verificados, seleciona horários reais, solicita ou remarca após login, mostra agenda de paciente/profissional e edita disponibilidade/bloqueios no fuso configurado. Não há preço/status enviado pelo navegador, cobrança ou link de videochamada.
+- Preço inicial (R$ 50), duração (50 min) e política de cancelamento (24 h) têm uma única fonte em `scheduler_settings`; alteração requer operação confiável no banco/`service_role`, sem painel administrativo.
+- Adicionados teste unitário de virada de dia/DST e suíte pgTAP com contas sintéticas para reserva, idempotência, conflito parcial, bloqueios, cancelamento e acesso entre usuários.
+- Adicionado teste de integração opcional que cria contas sintéticas em Supabase local e envia duas reservas para o mesmo slot simultaneamente; requer `SUPABASE_TEST_URL` local, publishable key e secret key em variáveis do processo.
+- Não executado: Vitest/build/lint ou pgTAP. A sessão não tem `node`, npm/pnpm, `psql` nem Supabase CLI; não foi possível validar migração contra Postgres nem executar duas sessões concorrentes. Executar `npm test`, `npm run build`, `npm run lint` e `supabase test db` no ambiente de desenvolvimento antes de publicar.
+
 ## Supabase, autenticação e perfis — 23/10/2026
 
 - Adicionado `@supabase/supabase-js`, cliente singleton tipado e variáveis públicas opcionais. Sem URL e publishable key, cadastro e login ficam desabilitados.
@@ -48,7 +60,8 @@
 ## Pendências
 
 - Integração real de identidade, persistência e backend.
-- Fluxo real de agendamento e disponibilidade.
+- Executar testes unitários e pgTAP em ambiente com Node e Supabase local, incluindo corrida com duas sessões concorrentes.
+- Configuração administrativa de preço/duração/política, hoje restrita ao banco.
 - Serviço de videochamada e legendas.
 - Fluxo de pagamento, explicitamente fora do escopo desta fundação.
 - Estratégia de testes end-to-end e validação automatizada dos breakpoints em navegador.

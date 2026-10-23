@@ -1,5 +1,4 @@
 import { Link, useParams } from 'react-router-dom'
-import { ButtonLink } from '../../components/ui/ButtonLink'
 import { Notice } from '../../components/ui/Notice'
 import { professionals } from './data'
 
@@ -35,9 +34,6 @@ export function ProfessionalProfilePage() {
           <span className="eyebrow">Perfil fictício · demonstração</span>
           <h1>{person.name}</h1>
           <p>{person.focus}</p>
-          <span className="profile-price">
-            R$ 50 <small>por sessão · referência</small>
-          </span>
         </div>
       </div>
       <Notice title="Informações ilustrativas">
@@ -66,9 +62,7 @@ export function ProfessionalProfilePage() {
               <li key={item}>{item}</li>
             ))}
           </ul>
-          <ButtonLink to={`/agendar/${person.id}`}>
-            Ver horários de demonstração <span aria-hidden="true">↗</span>
-          </ButtonLink>
+          <p>Este perfil fictício não possui horários reserváveis.</p>
         </aside>
       </div>
       <Link className="text-link" to="/profissionais">

@@ -11,31 +11,29 @@ export function PrivacyPage() {
         <span>Este conteúdo não é uma política jurídica vigente.</span>
       </div>
       <p className="page-intro">
-        Texto provisório para indicar como os termos e a privacidade poderão ser apresentados quando
-        o portal tiver serviços conectados.
+        Texto provisório. A política definitiva deve ser revista antes da operação pública do portal.
       </p>
       <article>
         <h2>1. Sobre esta demonstração</h2>
         <p>
-          O AcolheMente é uma interface demonstrativa. Não presta atendimento psicológico, não
-          agenda consultas e não realiza pagamentos ou videochamadas.
+          O portal permite solicitar e administrar horários quando conectado ao Supabase. A
+          plataforma ainda não realiza pagamentos nem oferece chamadas de vídeo.
         </p>
         <h2>2. Dados pessoais</h2>
         <p>
-          Esta versão não tem backend, autenticação ou formulário de contato e não foi projetada
-          para receber informações pessoais ou clínicas. Não insira dados sensíveis nos campos de
-          busca ou no navegador.
+          Com Supabase configurado, a autenticação, o perfil básico e os metadados do agendamento
+          são persistidos. Horários são armazenados em UTC e exibidos no fuso local. Não envie
+          informações clínicas pelo portal; não há prontuário ou campo clínico.
         </p>
         <h2>3. Conteúdo fictício</h2>
         <p>
-          Perfis, horários, agenda, preferências e estados exibidos são exemplos locais. Não
-          representam pessoas, serviços ou ofertas reais.
+          Perfis identificados como demonstração são fictícios e não podem ser reservados. A agenda
+          de profissionais verificados conectada ao banco corresponde a disponibilidade real.
         </p>
         <h2>4. Próximas etapas</h2>
         <p>
-          Uma política definitiva deverá ser elaborada e revisada por profissionais qualificados
-          antes da operação de qualquer serviço, considerando o tratamento de dados, direitos dos
-          titulares, segurança, retenção e canais de contato.
+          A política definitiva deverá detalhar tratamento, retenção, direitos dos titulares e
+          canais de contato, com revisão profissional antes da operação pública.
         </p>
         <p className="draft-note">
           Rascunho de interface. Não substitui aconselhamento jurídico nem uma política de

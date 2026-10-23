@@ -41,7 +41,7 @@ export function HomePage() {
                 Encontrar meu espaço <span aria-hidden="true">↗</span>
               </NavLink>
               <span className="hero-price">
-                <strong>R$ 50</strong> por sessão · valor demonstrativo
+                <strong>Valor social</strong> informado antes da solicitação
               </span>
             </div>
             <div className="hero-note">
@@ -94,7 +94,7 @@ export function HomePage() {
             <b>♡</b> Acolhimento para todos
           </span>
           <span>
-            <b>◎</b> Valor de referência: R$ 50
+            <b>◎</b> Valor configurado e exibido na agenda
           </span>
         </div>
       </section>

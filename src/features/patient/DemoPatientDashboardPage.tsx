@@ -49,7 +49,7 @@ export function DemoPatientDashboardPage() {
             </div>
             <div className="appointment-details">
               <h3>Sessão online com {item.professional}</h3>
-              <p>{item.time} · 50 minutos (demonstração)</p>
+              <p>{item.time} · duração fictícia</p>
             </div>
             <StatusBadge status={item.status}>{item.label}</StatusBadge>
             <Link to="/sessao-online" className="text-link">
