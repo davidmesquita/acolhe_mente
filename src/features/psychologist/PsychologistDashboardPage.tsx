@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
@@ -8,6 +9,7 @@ import type { ProfessionalProfile } from '../../types/database'
 import type { AppointmentSummary } from '../../types/database'
 import { ProfessionalScheduleEditor } from '../appointments/ProfessionalScheduleEditor'
 import { getMyAppointments, schedulingErrorMessage, updateAppointmentStatus } from '../appointments/schedulingService'
+import { canJoinDemoSession } from '../video-session/sessionEligibility'
 
 const appointmentStatusLabels = {
   requested: 'Solicitado',
@@ -200,6 +202,9 @@ export function PsychologistDashboardPage() {
                 </div>
                 <span className={`status-badge status-${appointment.status}`}>{appointmentStatusLabels[appointment.status]}</span>
                 <div className="agenda-actions">
+                  {canJoinDemoSession(appointment) && (
+                    <Link className="text-link" to={`/sessao-online/${appointment.id}`}>Entrar na sala de teste</Link>
+                  )}
                   {appointment.status === 'requested' && (
                     <Button type="button" disabled={appointmentAction === appointment.id} onClick={() => void updateAppointment(appointment.id, 'confirmed')}>Confirmar</Button>
                   )}

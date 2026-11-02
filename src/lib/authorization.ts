@@ -2,7 +2,7 @@ import type { UserRole } from '../types/database'
 
 export function hasRequiredRole(
   actual: UserRole | undefined,
-  required: Exclude<UserRole, 'admin'>,
+  required?: Exclude<UserRole, 'admin'>,
 ) {
   return actual === required
 }
@@ -22,5 +22,6 @@ export function getProtectedRouteDecision(
   if (!state.userId) return 'login-required'
   if (state.hasError) return 'profile-error'
   if (!state.profileRole) return 'profile-unavailable'
+  if (!required) return state.profileRole === 'admin' ? 'wrong-role' : 'allow'
   return hasRequiredRole(state.profileRole, required) ? 'allow' : 'wrong-role'
 }

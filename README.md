@@ -1,12 +1,12 @@
 # AcolheMente
 
-Portal de psicologia social. Com um projeto Supabase configurado, pacientes solicitam horários reais de profissionais verificados, e profissionais controlam disponibilidade e atendimentos. Perfis de demonstração seguem fictícios e não reserváveis. Não há prontuário, pagamento ou videochamada conectados.
+Portal de psicologia social. Com Supabase configurado, pacientes solicitam horários de profissionais verificados e os profissionais administram atendimentos. A videochamada JaaS e as legendas locais são experimentais, disponíveis apenas para atendimentos fictícios explicitamente marcados. Não há prontuário, pagamento ou uso clínico.
 
-### Rota privada de teste
+### Rotas privadas de teste
 
-`/sessao-online` exige uma sessão Supabase real e perfil com papel `patient`. Crie uma conta de paciente pela tela `/cadastro` no projeto Supabase configurado e confirme o e-mail, se a confirmação estiver ativa. Não há usuário de teste nem senha fixa embutidos no repositório.
+`/sessao-online` exige uma sessão Supabase real e permite testar câmera/microfone localmente, sem participantes remotos. `/sessao-online/:appointmentId` aceita paciente ou psicólogo autenticado, mas a Edge Function também exige participação no agendamento, status confirmado, `is_demo=true` e janela de horário. Crie contas sintéticas em projeto Supabase local; não há usuário/senha fixos no repositório.
 
-Esta página oferece um loopback WebRTC local para conferir câmera e microfone no próprio navegador; não conecta outra pessoa. As legendas são frases fictícias acionadas manualmente, usadas apenas para avaliar a apresentação e acessibilidade. Não há reconhecimento de fala, gravação, envio ou armazenamento de áudio, vídeo ou transcrição. O acesso à rota é protegido também pela autorização do perfil consultado via Supabase; isso não cria uma sala de chamada remota nem substitui políticas de backend.
+O loopback é somente um teste local de dispositivos. A rota por agendamento usa JaaS (8x8), recebe um JWT curto do backend e não grava links/tokens. JaaS processa a mídia para a chamada; gravação e transcrição do provedor são desativadas. As legendas solicitam reconhecimento local `pt-BR` após ação explícita, sem fallback em nuvem e sem persistência. Ambas as funções são para diálogos fictícios, não para atendimento ou dados clínicos.
 
 ## Requisitos
 
@@ -51,6 +51,7 @@ npm run build
 3. No Supabase Auth → URL Configuration, configure a Site URL e os Redirect URLs. Para desenvolvimento local, a configuração aplicada é Site URL `http://localhost:5173` e os Redirect URLs `http://localhost:5173/**` e `http://127.0.0.1:5173/**`, necessários para confirmação de cadastro e recuperação em `/recuperar-senha`. Antes de publicar, substitua a Site URL pelo domínio HTTPS de produção e adicione somente os redirecionamentos desse domínio; mantenha os endereços locais apenas se ainda precisar desenvolver localmente.
 4. Para testes SQL locais, instale o Supabase CLI, inicie Docker e execute `supabase test db`. Os casos pgTAP ficam em `supabase/tests/`.
 5. Publique a função administrativa após revisar sua política de origem: `supabase functions deploy admin-professional-management`. Configure `APP_ALLOWED_ORIGIN`, `APP_SUPABASE_PUBLISHABLE_KEY` e `APP_SUPABASE_SECRET_KEY` como secrets da função (Dashboard ou `supabase secrets set`). Use sempre `APP_SUPABASE_SECRET_KEY` apenas no ambiente da função. Nunca o coloque em `.env.local`, variável `VITE_*`, Git, log ou navegador.
+6. A sala JaaS é opcional e desativada por padrão. Publique `supabase functions deploy meeting-room-token` e defina no ambiente da função `APP_ALLOWED_ORIGIN`, `APP_SUPABASE_PUBLISHABLE_KEY`, `APP_SUPABASE_SECRET_KEY`, `JAAS_APP_ID`, `JAAS_API_KEY_ID` e `JAAS_PRIVATE_KEY` (PEM PKCS#8). Defina `DEMO_SESSIONS_ENABLED=true` somente no projeto de teste e depois de revisar [a avaliação de videochamada](src/features/video-session/README.md). Não use segredos JaaS no cliente.
 
 O primeiro administrador deve ser designado manualmente por operador autorizado no SQL Editor do projeto, após verificar a identidade da conta: `update public.profiles set role = 'admin' where id = '<UUID verificado>';`. Não há conta, senha fixa ou seed administrativo. A função server-side valida o bearer token e consulta o papel no banco antes de usar a chave privilegiada.
 
@@ -63,9 +64,9 @@ Sem as duas variáveis públicas configuradas, a interface deixa autenticação 
 - `src/features`: áreas de profissionais, agendamentos, sessão online e legendas.
 - `src/lib`, `src/hooks`, `src/types`, `src/styles`: utilitários, hooks, tipos e estilos.
 - `supabase/migrations`: schema de perfis e agenda, políticas RLS, privilégios mínimos e views públicas restritas a profissionais verificados.
-- `supabase/functions`: operações de concessão de função profissional e verificação, isoladas no backend.
-- `supabase/tests`: casos pgTAP para papéis, grants, isolamento e RLS; precisam de Supabase local para executar.
-- `tests/unit`: testes de serviços de autenticação e autorização de rotas; `tests/e2e`: plano de testes de navegador ainda pendente.
+- `supabase/functions`: operações administrativas e emissão server-side do JWT JaaS após validação do participante.
+- `supabase/tests`: casos pgTAP para papéis, agenda, isolamento e sessões demo; precisam de Supabase local para executar.
+- `tests/unit`: testes de autenticação, fusos, legendas e janela de sessão; `tests/e2e`: roteiro manual de navegador.
 
 ## Páginas disponíveis
 
@@ -76,6 +77,8 @@ Sem as duas variáveis públicas configuradas, a interface deixa autenticação 
 - Entrar, cadastro, recuperação (`/entrar`, `/cadastro`, `/esqueci-senha`, `/recuperar-senha`): Supabase Auth quando configurado. Novos cadastros começam como paciente; confirmação de e-mail depende da configuração Auth.
 - Área do paciente (`/paciente`) e área profissional (`/psicologo`): protegidas por sessão e papel; exibem agendamentos próprios. Pacientes podem cancelar ou reagendar; psicólogos confirmam, concluem ou cancelam e configuram disponibilidade/bloqueios.
 - Demonstrações isoladas (`/demonstracao/paciente`, `/demonstracao/psicologo`): agendas fictícias sem vínculo com contas.
+- Sessão local (`/sessao-online`): loopback de câmera/microfone, sem conexão remota.
+- Sala de demonstração (`/sessao-online/:appointmentId`): JaaS para participantes autenticados de agendamento fictício confirmado; requer Edge Function e secrets.
 - Acessibilidade (`/acessibilidade`), ajuda (`/ajuda`) e termos/privacidade (`/privacidade`). O conteúdo de termos e privacidade está identificado como rascunho sujeito a revisão profissional.
 
 ### Regras da agenda
@@ -87,18 +90,27 @@ Sem as duas variáveis públicas configuradas, a interface deixa autenticação 
 - Estados: `requested`, `confirmed`, `cancelled` e `completed`. Somente o profissional confirma; conclusão só é permitida após o horário final. Pacientes cancelam até o limite configurado. Reagendamento cancela e cria a nova reserva na mesma transação.
 - RLS impede leitura de agendamentos por terceiros, e o cliente não recebe links de videochamada nem pode inserir diretamente uma reserva.
 
+### Sala e legendas experimentais
+
+- `is_demo` é `false` por padrão. Somente o servidor emite JWT JaaS restrito ao agendamento e sala, depois de conferir usuário, papel, status e janela de 15 minutos antes/depois. Um UUID ou nome de sala não é a autorização.
+- O JaaS Dev tinha cota publicada de 25 MAUs grátis no acesso de 23/10/2026; planos pagos e add-ons podem gerar cobrança. `meet.jit.si` público não é usado para agendamentos porque o projeto não controla de forma confiável quem cria/entra em salas públicas.
+- A API Web Speech é limitada por navegador. O código só ativa o modo local experimental com pacote `pt-BR`; quando ausente, legendas ficam indisponíveis. Não há serviço externo de reconhecimento conectado.
+- Transcrição é memória temporária da página, iniciada por clique e apagada ao sair/limpar. Não é perfeita nem substitui intérprete de Libras. Somente diálogos sintéticos são permitidos nesta etapa.
+- Fontes e comparativo de preços, suporte, privacidade e alternativas estão em [video-session/README.md](src/features/video-session/README.md) e [captions/README.md](src/features/captions/README.md).
+
 ### Testes da agenda
 
 - Unitários: `npm test`, incluindo conversão UTC/local perto da virada do dia e horário local inexistente na mudança de DST.
 - Banco: `supabase test db`, incluindo reserva válida, repetição idempotente, slot ocupado/bloqueado, sobreposição parcial, cancelamento, bloqueio de atendimento ativo e isolamento entre usuários.
+- Sessão: `supabase test db` inclui `video_demo_sessions.test.sql`; roteiro manual de câmeras, reconexão, encerramento, mobile, reconhecimento indisponível e não persistência está em `tests/e2e/README.md`.
 - Concorrência real: o teste `tests/integration/schedulingConcurrency.test.ts` cria contas sintéticas e dispara duas RPCs ao mesmo instante; ele só executa quando `SUPABASE_TEST_URL` (localhost), `SUPABASE_TEST_PUBLISHABLE_KEY` e `SUPABASE_TEST_SECRET_KEY` estão definidos no ambiente. Contas e reservas são removidas no fim.
-- A trava por profissional e constraint GiST garantem serialização no banco. A migração, os casos pgTAP e o teste de duas sessões ainda não foram executados nesta sessão: faltam Node/npm, Supabase CLI e Docker. Rode tudo em Supabase local antes de publicar.
+- A trava por profissional e constraint GiST garantem serialização no banco. Migrações, pgTAP, testes do navegador/JaaS e reconhecimento local ainda não foram executados nesta sessão: faltam Node/npm, Supabase CLI, Docker, conta e credenciais JaaS. Rode testes fictícios em Supabase local antes de habilitar o provedor.
 
 Os dados de demonstração ficam no código. Não envie informações de saúde, dados sensíveis ou credenciais para campos ou logs. A variável `VITE_*` é pública por definição. O navegador recebe somente URL e chave publishable. Chaves secret/service-role devem existir exclusivamente em secrets do backend/Edge Function.
 
 ## Limites de segurança
 
-O desenho combina RLS com grants SQL mínimos, políticas de coluna, view pública de campos fixos, validação de constraints no PostgreSQL e checagem server-side na Edge Function. Isso não é uma certificação de segurança: as políticas precisam ser exercitadas no projeto de destino, a administração de chaves e backups cabe à operação e a implantação requer revisão profissional. A função administrativa está preparada para execução, mas não foi publicada nem testada contra um projeto remoto nesta sessão. Não há histórico clínico, prontuário, transcrição ou tabelas de agendamento.
+O desenho combina RLS com grants SQL mínimos, políticas de coluna, views públicas restritas, constraints PostgreSQL e checagem server-side nas Edge Functions. Isso não é certificação de segurança, privacidade ou conformidade clínica. As políticas e o fluxo de participante/JaaS precisam ser testados no projeto destino; segredos e backups cabem à operação. Não há histórico clínico, prontuário, gravação ou uso com pacientes.
 
 ## Decisões e pendências
 

@@ -16,14 +16,16 @@ export function PrivacyPage() {
       <article>
         <h2>1. Sobre esta demonstração</h2>
         <p>
-          O portal permite solicitar e administrar horários quando conectado ao Supabase. A
-          plataforma ainda não realiza pagamentos nem oferece chamadas de vídeo.
+          O portal permite solicitar e administrar horários quando conectado ao Supabase. A sala
+          JaaS e o reconhecimento local são experimentais, restritos a atendimentos fictícios e não
+          representam um serviço clínico. Não há pagamentos.
         </p>
         <h2>2. Dados pessoais</h2>
         <p>
           Com Supabase configurado, a autenticação, o perfil básico e os metadados do agendamento
-          são persistidos. Horários são armazenados em UTC e exibidos no fuso local. Não envie
-          informações clínicas pelo portal; não há prontuário ou campo clínico.
+          são persistidos. Horários são armazenados em UTC e exibidos no fuso local. Na sala demo,
+          a mídia é processada pela JaaS; legendas locais são opcionais e temporárias. Não envie
+          informações clínicas; não há prontuário ou campo clínico.
         </p>
         <h2>3. Conteúdo fictício</h2>
         <p>

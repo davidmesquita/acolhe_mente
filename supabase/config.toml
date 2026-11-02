@@ -1,2 +1,5 @@
 [functions.admin-professional-management]
 verify_jwt = false
+
+[functions.meeting-room-token]
+verify_jwt = false

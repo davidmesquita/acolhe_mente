@@ -62,6 +62,7 @@ export type AppointmentSummary = {
   other_party_name: string
   timezone: string | null
   professional_id: string
+  is_demo: boolean
 }
 export type AvailableSlot = {
   starts_at: string
@@ -129,6 +130,7 @@ export interface Database {
           created_at: string
           updated_at: string
           cancelled_at: string | null
+          is_demo: boolean
         }
         Insert: never
         Update: never
@@ -144,16 +146,15 @@ export interface Database {
     Functions: {
       get_scheduler_settings: {
         Args: Record<PropertyKey, never>
-        Returns: SchedulerSettings[]
-      }
-      get_professional_timezone: {
-        Args: { professional_uuid: string }
+        Insert: never
+        Update: never
+        Relationships: []
         Returns: string | null
       }
       save_professional_availability: {
-        Args: { availability: Json }
-        Returns: undefined
-      }
+        Insert: never
+        Update: never
+        Relationships: []
       get_available_slots: {
         Args: { professional_uuid: string; local_date: string }
         Returns: AvailableSlot[]

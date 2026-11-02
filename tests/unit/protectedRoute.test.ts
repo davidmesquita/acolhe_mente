@@ -43,4 +43,10 @@ describe('acesso a páginas protegidas', () => {
       'wrong-role',
     )
   })
+
+  it('permite rota autenticada para ambos participantes, sem permitir admin', () => {
+    expect(getProtectedRouteDecision(base, undefined)).toBe('allow')
+    expect(getProtectedRouteDecision({ ...base, profileRole: 'psychologist' }, undefined)).toBe('allow')
+    expect(getProtectedRouteDecision({ ...base, profileRole: 'admin' }, undefined)).toBe('wrong-role')
+  })
 })

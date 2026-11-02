@@ -1,5 +1,15 @@
 # Registro de implementação
 
+## Sala de demonstração e legendas — 23/10/2026
+
+- Avaliadas as documentações oficiais Jitsi IFrame/JaaS/JWT, MDN SpeechRecognition/getUserMedia, preços OpenAI e whisper.cpp. Decisão e snapshot de custos em `src/features/video-session/README.md`; comparativo de reconhecimento em `src/features/captions/README.md`.
+- Implementada sala JaaS IFrame com início de câmera/microfone desligados, controles, encerramento, estados, recuperação e layout responsivo. `/sessao-online/:appointmentId` exige sessão; a Edge Function confirma participação, perfil, status, `is_demo=true` e janela de entrada antes de assinar JWT JaaS curto e limitado à sala.
+- Nova migração adiciona `appointments.is_demo`, falso por padrão. Nenhuma URL ou token é persistido; o serviço público `meet.jit.si` não é usado como controle de acesso. A integração remota permanece desligada até secrets JaaS e `DEMO_SESSIONS_ENABLED=true` em ambiente de teste.
+- Adicionado módulo de legendas pt-BR que exige disponibilidade de reconhecimento local e ação explícita. Não usa serviço externo, não persiste texto e diferencia resultado parcial/final. O modo local é experimental e pode não existir em navegador móvel/Safari/Firefox.
+- Testes unitários cobrem resultados parcial/final, janela de sala demo e rota autenticada de ambos participantes; pgTAP verifica marcador demo default-false e isolamento. Roteiro manual cobre permissões, reconexão, fim de chamada, mobile, reconhecimento indisponível e storage.
+- Não executado: `npm test`, build, pgTAP, teste em browsers ou JaaS. O ambiente não tem Node/npm nem Supabase CLI/Docker, e não há credenciais de provedor. Não foi feita alegação de conformidade clínica.
+- Correção adicional na tipagem do banco: `scheduler_settings` e `professional_availability` agora têm contratos `Insert/Update: never`, conforme seus grants/RPCs.
+
 ## Agenda e agendamentos — 24/10/2026
 
 - Criada migração aditiva para disponibilidade semanal, fuso IANA, exceções/bloqueios, configurações centralizadas, agendamentos e estados `requested`, `confirmed`, `cancelled` e `completed`.
@@ -62,7 +72,7 @@
 - Integração real de identidade, persistência e backend.
 - Executar testes unitários e pgTAP em ambiente com Node e Supabase local, incluindo corrida com duas sessões concorrentes.
 - Configuração administrativa de preço/duração/política, hoje restrita ao banco.
-- Serviço de videochamada e legendas.
+- Validar fluxo de videochamada/legendas em navegadores e completar a revisão independente antes de qualquer uso fora de teste.
 - Fluxo de pagamento, explicitamente fora do escopo desta fundação.
 - Estratégia de testes end-to-end e validação automatizada dos breakpoints em navegador.
 - Investigar o aviso de encerramento do Vitest no ambiente local.

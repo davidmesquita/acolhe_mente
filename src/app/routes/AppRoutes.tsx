@@ -40,7 +40,12 @@ export function AppRoutes() {
         <Route path="/acessibilidade" element={<AccessibilityPage />} />
         <Route path="/ajuda" element={<HelpPage />} />
         <Route path="/privacidade" element={<PrivacyPage />} />
-        <Route path="/sessao-online" element={<VideoSessionPage />} />
+        <Route element={<ProtectedRoute role="patient" />}>
+          <Route path="/sessao-online" element={<VideoSessionPage />} />
+        </Route>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/sessao-online/:appointmentId" element={<VideoSessionPage />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

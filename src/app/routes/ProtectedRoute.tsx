@@ -4,7 +4,7 @@ import { useAuth } from '../providers/useAuth'
 import type { UserRole } from '../../types/database'
 import { getProtectedRouteDecision } from '../../lib/authorization'
 
-export function ProtectedRoute({ role }: { role: Exclude<UserRole, 'admin'> }) {
+export function ProtectedRoute({ role }: { role?: Exclude<UserRole, 'admin'> }) {
   const auth = useAuth()
   const location = useLocation()
   const decision = getProtectedRouteDecision(

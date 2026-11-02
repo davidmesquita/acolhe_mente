@@ -7,6 +7,7 @@ import { Notice } from '../../components/ui/Notice'
 import type { AppointmentSummary } from '../../types/database'
 import { cancelAppointment, getMyAppointments, schedulingErrorMessage } from '../appointments/schedulingService'
 import { updateDisplayName } from '../auth/authService'
+import { canJoinDemoSession } from '../video-session/sessionEligibility'
 
 const statusLabels = {
   requested: 'Solicitado',
@@ -44,7 +45,7 @@ export function PatientDashboardPage() {
       })
       .finally(() => {
         if (active) setAppointmentsLoading(false)
-        import { Link } from 'react-router-dom'
+        // import { Link } from 'react-router-dom'
       })
     return () => {
       active = false
@@ -114,14 +115,21 @@ export function PatientDashboardPage() {
                 <p>{formatAppointment(appointment.starts_at)} · {appointment.duration_minutes} min</p>
               </div>
               <span className={`status-badge status-${appointment.status}`}>{statusLabels[appointment.status]}</span>
-              {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() ? (
+              {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() || canJoinDemoSession(appointment) ? (
                 <div className="appointment-actions">
-                  <Link className="text-link" to={`/agendar/${appointment.professional_id}`} state={{ rescheduleId: appointment.id }}>
-                    Remarcar
-                  </Link>
-                  <Button type="button" variant="quiet" disabled={cancelling === appointment.id} onClick={() => void cancel(appointment.id)}>
-                    {cancelling === appointment.id ? 'Cancelando...' : 'Cancelar'}
-                  </Button>
+                  {canJoinDemoSession(appointment) && (
+                    <Link className="text-link" to={`/sessao-online/${appointment.id}`}>Entrar na sala de teste</Link>
+                  )}
+                  {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() && (
+                    <>
+                      <Link className="text-link" to={`/agendar/${appointment.professional_id}`} state={{ rescheduleId: appointment.id }}>
+                        Remarcar
+                      </Link>
+                      <Button type="button" variant="quiet" disabled={cancelling === appointment.id} onClick={() => void cancel(appointment.id)}>
+                        {cancelling === appointment.id ? 'Cancelando...' : 'Cancelar'}
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : <span />}
             </article>
