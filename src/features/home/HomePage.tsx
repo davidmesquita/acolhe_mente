@@ -1,6 +1,4 @@
 import { NavLink } from 'react-router-dom'
-import { ProfessionalCard } from '../../components/ui/ProfessionalCard'
-import { professionals } from '../professionals/data'
 
 const steps = [
   {
@@ -110,16 +108,11 @@ export function HomePage() {
             </h2>
           </div>
           <NavLink className="text-link" to="/profissionais">
-            Ver todos os profissionais <span aria-hidden="true">↗</span>
+            Ver profissionais verificados <span aria-hidden="true">↗</span>
           </NavLink>
         </div>
-        <div className="professional-grid">
-          {professionals.slice(0, 3).map((person) => (
-            <ProfessionalCard key={person.id} professional={person} />
-          ))}
-        </div>
         <p className="demo-disclaimer">
-          Profissionais apresentados para demonstração; perfis fictícios.
+          Profissionais verificados aparecerão aqui quando o Supabase estiver configurado.
         </p>
       </section>
 

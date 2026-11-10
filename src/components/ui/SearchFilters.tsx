@@ -1,7 +1,6 @@
 export type ProfessionalFilters = {
   specialty: string
   availability: string
-  accessibility: string
   communication: string
   online: boolean
 }
@@ -42,18 +41,6 @@ export function SearchFilters({
           <option>Manhã</option>
           <option>Tarde</option>
           <option>Noite</option>
-        </select>
-      </label>
-      <label className="filter-field">
-        Recurso de acessibilidade
-        <select
-          value={value.accessibility}
-          onChange={(event) => update('accessibility', event.target.value)}
-        >
-          <option value="">Qualquer recurso</option>
-          <option>Legendas</option>
-          <option>Libras</option>
-          <option>Leitura labial</option>
         </select>
       </label>
       <label className="filter-field">

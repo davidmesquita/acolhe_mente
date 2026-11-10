@@ -3,13 +3,6 @@ import { Link, useParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Notice } from '../../components/ui/Notice'
 import { useAuth } from '../../app/providers/useAuth'
-import { JitsiDemoSession } from './JitsiDemoSession'
-
-const sampleCaptions = [
-  'Olá, esta é uma legenda de demonstração.',
-  'Estou testando a leitura e o tamanho das legendas.',
-  'Nenhuma fala ou áudio real está sendo transcrito.',
-]
 
 function LocalDeviceTestPage() {
   const { profile } = useAuth()
@@ -19,7 +12,6 @@ function LocalDeviceTestPage() {
   const peerB = useRef<RTCPeerConnection | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [callState, setCallState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle')
-  const [captionIndex, setCaptionIndex] = useState(-1)
   const [error, setError] = useState('')
 
   function endCall() {
@@ -92,8 +84,8 @@ function LocalDeviceTestPage() {
         sem conexão com outra pessoa.
       </p>
       <Notice title="Demonstração, não é atendimento">
-        As legendas abaixo são frases fictícias para testar a interface. Não há reconhecimento de
-        fala, gravação, envio ou armazenamento de áudio, vídeo ou transcrição.
+        Este é um teste local de câmera e microfone. Não há conexão com outra pessoa,
+        gravação, envio ou armazenamento de áudio, vídeo.
       </Notice>
 
       <div className="test-call-videos" aria-label="Prévia da chamada de teste">
@@ -128,16 +120,6 @@ function LocalDeviceTestPage() {
       </div>
       {error && <Notice title="Chamada não iniciada" kind="error">{error}</Notice>}
 
-      <section className="test-captions" aria-labelledby="captions-title">
-        <h2 id="captions-title">Legendas de demonstração</h2>
-        <p>Acione frases fictícias para conferir a leitura e a acessibilidade do componente.</p>
-        <Button onClick={() => setCaptionIndex((current) => (current + 1) % sampleCaptions.length)}>
-          Exibir próxima legenda
-        </Button>
-        <div className="test-caption-output" role="status" aria-live="polite" aria-atomic="true">
-          {captionIndex < 0 ? 'As legendas de exemplo aparecerão aqui.' : sampleCaptions[captionIndex]}
-        </div>
-      </section>
       <p className="field-hint">
         Para testar com sua própria conta de paciente, entre ou crie uma conta em{' '}
         <Link to="/entrar">Entrar</Link>. A rota exige autenticação real do Supabase.
@@ -146,9 +128,27 @@ function LocalDeviceTestPage() {
   )
 }
 
+function VideoSessionPlaceholder({ appointmentId }: { appointmentId: string }) {
+  return (
+    <section className="section inner-page">
+      <span className="eyebrow">Sessão online</span>
+      <h1>Videoconferência</h1>
+      <p className="page-intro">
+        A integração com Jitsi será implementada em breve.
+      </p>
+      <Notice title="Em desenvolvimento">
+        A videoconferência para o atendimento <code>{appointmentId}</code> ainda não está disponível.
+      </Notice>
+      <p className="field-hint">
+        Volte à <Link to="/paciente">área do paciente</Link> ou <Link to="/psicologo">área profissional</Link>.
+      </p>
+    </section>
+  )
+}
+
 export function VideoSessionPage() {
   const { appointmentId } = useParams()
   return appointmentId
-    ? <JitsiDemoSession appointmentId={appointmentId} />
+    ? <VideoSessionPlaceholder appointmentId={appointmentId} />
     : <LocalDeviceTestPage />
 }

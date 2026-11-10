@@ -15,7 +15,7 @@ export function getProtectedRouteDecision(
     profileRole: UserRole | null
     hasError: boolean
   },
-  required: Exclude<UserRole, 'admin'>,
+  required?: Exclude<UserRole, 'admin'>,
 ) {
   if (state.loading) return 'loading'
   if (!state.configured) return 'configuration-required'

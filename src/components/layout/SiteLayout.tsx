@@ -1,10 +1,12 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
-import { AccessibilityToolbar } from '../accessibility/AccessibilityToolbar'
+import { useAuth } from '../../app/providers/useAuth'
 
 export function SiteLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
+  const { loginAs, profile } = useAuth()
+  const isMock = typeof loginAs === 'function'
   const closeMenu = () => setMenuOpen(false)
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Escape' && menuOpen) {
@@ -64,9 +66,27 @@ export function SiteLayout() {
               Agendar sessão <span aria-hidden="true">↗</span>
             </NavLink>
           </nav>
+          {isMock && (
+            <div className="dev-role-switcher" aria-label="Trocar perfil de desenvolvimento">
+              <span className="dev-role-label">Dev: </span>
+              <button
+                className={`dev-role-btn ${profile?.role === 'patient' ? 'active' : ''}`}
+                onClick={() => loginAs?.('patient')}
+                title="Paciente"
+              >
+                👤 Paciente
+              </button>
+              <button
+                className={`dev-role-btn ${profile?.role === 'psychologist' ? 'active' : ''}`}
+                onClick={() => loginAs?.('psychologist')}
+                title="Profissional"
+              >
+                🩺 Profissional
+              </button>
+            </div>
+          )}
         </div>
       </header>
-      <AccessibilityToolbar />
       <main id="conteudo" tabIndex={-1}>
         <Outlet />
       </main>
@@ -82,7 +102,6 @@ export function SiteLayout() {
           </NavLink>
           <p>Um espaço para cuidar de você, no seu tempo.</p>
           <nav className="footer-links" aria-label="Links do rodapé">
-            <NavLink to="/acessibilidade">Acessibilidade</NavLink>
             <NavLink to="/ajuda">Ajuda</NavLink>
             <NavLink to="/privacidade">Termos e privacidade</NavLink>
             <NavLink to="/paciente">Área do paciente</NavLink>

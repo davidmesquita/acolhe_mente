@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
+import { useAuth } from '../../app/providers/useAuth'
 import type { ProfessionalAvailability, ScheduleException } from '../../types/database'
 import {
   addScheduleException,
@@ -12,6 +13,15 @@ import {
   schedulingErrorMessage,
   zonedLocalDateTimeToUtc,
 } from './schedulingService'
+import {
+  addScheduleException as mockAddScheduleException,
+  getProfessionalAvailability as mockGetProfessionalAvailability,
+  getScheduleExceptions as mockGetScheduleExceptions,
+  removeScheduleException as mockRemoveScheduleException,
+  saveProfessionalAvailability as mockSaveProfessionalAvailability,
+  schedulingErrorMessage as mockSchedulingErrorMessage,
+  zonedLocalDateTimeToUtc as mockZonedLocalDateTimeToUtc,
+} from './mockSchedulingService'
 
 const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
 const timezoneOptions = [
@@ -36,6 +46,9 @@ function formatException(exception: ScheduleException, timezone: string) {
 }
 
 export function ProfessionalScheduleEditor() {
+  const auth = useAuth()
+  const isMock = typeof auth.loginAs === 'function'
+
   const [days, setDays] = useState<DaySchedule[]>(
     weekdays.map(() => ({ enabled: false, starts_at: '09:00', ends_at: '17:00' })),
   )
@@ -49,13 +62,21 @@ export function ProfessionalScheduleEditor() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  const getAvailFn = isMock ? mockGetProfessionalAvailability : getProfessionalAvailability
+  const getExcFn = isMock ? mockGetScheduleExceptions : getScheduleExceptions
+  const saveAvailFn = isMock ? mockSaveProfessionalAvailability : saveProfessionalAvailability
+  const addExcFn = isMock ? mockAddScheduleException : addScheduleException
+  const removeExcFn = isMock ? mockRemoveScheduleException : removeScheduleException
+  const zonedFn = isMock ? mockZonedLocalDateTimeToUtc : zonedLocalDateTimeToUtc
+  const errorFn = isMock ? mockSchedulingErrorMessage : schedulingErrorMessage
+
   async function refreshExceptions() {
-    setExceptions(await getScheduleExceptions())
+    setExceptions(await getExcFn())
   }
 
   useEffect(() => {
     let active = true
-    void Promise.all([getProfessionalAvailability(), getScheduleExceptions()])
+    void Promise.all([getAvailFn(), getExcFn()])
       .then(([availability, loadedExceptions]) => {
         if (!active) return
         setExceptions(loadedExceptions)
@@ -72,7 +93,7 @@ export function ProfessionalScheduleEditor() {
         }
       })
       .catch((cause: unknown) => {
-        if (active) setError(schedulingErrorMessage(cause))
+        if (active) setError(errorFn(cause))
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -80,7 +101,7 @@ export function ProfessionalScheduleEditor() {
     return () => {
       active = false
     }
-  }, [])
+  }, [isMock])
 
   async function saveSchedule(event: FormEvent) {
     event.preventDefault()
@@ -91,12 +112,12 @@ export function ProfessionalScheduleEditor() {
       const entries = days.flatMap((day, weekday) =>
         day.enabled ? [{ weekday, starts_at: day.starts_at, ends_at: day.ends_at, timezone }] : [],
       )
-      await saveProfessionalAvailability(entries)
-      const refreshed: ProfessionalAvailability[] = await getProfessionalAvailability()
+      await saveAvailFn(entries)
+      const refreshed: ProfessionalAvailability[] = await getAvailFn()
       if (refreshed.length) setTimezone(refreshed[0]!.timezone)
       setSuccess('Disponibilidade semanal salva.')
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
+      setError(errorFn(cause))
     } finally {
       setBusy(false)
     }
@@ -108,17 +129,17 @@ export function ProfessionalScheduleEditor() {
     setError('')
     setSuccess('')
     try {
-      const start = zonedLocalDateTimeToUtc(blockStart, timezone)
-      const end = zonedLocalDateTimeToUtc(blockEnd, timezone)
+      const start = zonedFn(blockStart, timezone)
+      const end = zonedFn(blockEnd, timezone)
       if (new Date(start) >= new Date(end)) throw new Error('O fim do bloqueio deve ser posterior ao início.')
-      await addScheduleException(start, end, blockReason.trim())
+      await addExcFn(start, end, blockReason.trim())
       await refreshExceptions()
       setBlockStart('')
       setBlockEnd('')
       setBlockReason('')
       setSuccess('Bloqueio adicionado à agenda.')
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
+      setError(errorFn(cause))
     } finally {
       setBusy(false)
     }
@@ -129,11 +150,11 @@ export function ProfessionalScheduleEditor() {
     setError('')
     setSuccess('')
     try {
-      await removeScheduleException(id)
+      await removeExcFn(id)
       await refreshExceptions()
       setSuccess('Bloqueio removido.')
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
+      setError(errorFn(cause))
     } finally {
       setBusy(false)
     }

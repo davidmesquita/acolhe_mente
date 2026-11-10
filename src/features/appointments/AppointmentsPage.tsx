@@ -16,6 +16,17 @@ import {
   rescheduleAppointment,
   schedulingErrorMessage,
 } from './schedulingService'
+import {
+  getAvailableSlots as getMockAvailableSlots,
+  getProfessionalTimezone as getMockProfessionalTimezone,
+  getSchedulerSettings as getMockSchedulerSettings,
+  getVerifiedProfessional as getMockVerifiedProfessional,
+  getVerifiedProfessionals as getMockVerifiedProfessionals,
+  localDateInTimezone as mockLocalDateInTimezone,
+  requestAppointment as mockRequestAppointment,
+  rescheduleAppointment as mockRescheduleAppointment,
+  schedulingErrorMessage as mockSchedulingErrorMessage,
+} from './mockSchedulingService'
 
 function dateLabel(value: string, timezone: string) {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -29,7 +40,20 @@ export function AppointmentsPage() {
   const { professionalId } = useParams()
   const auth = useAuth()
   const location = useLocation()
+  const isMock = typeof auth.loginAs === 'function'
+
+  const getVerifiedProf = isMock ? getMockVerifiedProfessional : getVerifiedProfessional
+  const getVerifiedProfs = isMock ? getMockVerifiedProfessionals : null
+  const getScheduler = isMock ? getMockSchedulerSettings : getSchedulerSettings
+  const getTimezone = isMock ? getMockProfessionalTimezone : getProfessionalTimezone
+  const getSlots = isMock ? getMockAvailableSlots : getAvailableSlots
+  const localDateFn = isMock ? mockLocalDateInTimezone : localDateInTimezone
+  const requestAppointmentFn = isMock ? mockRequestAppointment : requestAppointment
+  const rescheduleFn = isMock ? mockRescheduleAppointment : rescheduleAppointment
+  const errorFn = isMock ? mockSchedulingErrorMessage : schedulingErrorMessage
+
   const [professional, setProfessional] = useState<VerifiedProfessional | null>(null)
+  const [professionals, setProfessionals] = useState<VerifiedProfessional[]>([])
   const [timezone, setTimezone] = useState('America/Sao_Paulo')
   const [settings, setSettings] = useState<SchedulerSettings | null>(null)
   const [slots, setSlots] = useState<AvailableSlot[]>([])
@@ -55,23 +79,32 @@ export function AppointmentsPage() {
       setProfessional(null)
       setSlots([])
       setSettings(null)
-      if (!professionalId) {
-        setProfessional(null)
-        setSlots([])
-        setSettings(null)
-        setError('Escolha um profissional verificado para consultar horários.')
-        setLoading(false)
-        return
-      }
+
       try {
+        if (!professionalId && getVerifiedProfs) {
+          const profs = await getVerifiedProfs()
+          if (!active) return
+          setProfessionals(profs)
+          const nextSettings = await getScheduler()
+          setSettings(nextSettings)
+          setLoading(false)
+          return
+        }
+
+        if (!professionalId) {
+          setError('Escolha um profissional verificado para consultar horários.')
+          setLoading(false)
+          return
+        }
+
         const [profile, nextSettings, professionalTimezone] = await Promise.all([
-          getVerifiedProfessional(professionalId),
-          getSchedulerSettings(),
-          getProfessionalTimezone(professionalId),
+          getVerifiedProf(professionalId),
+          getScheduler(),
+          getTimezone(professionalId),
         ])
         if (!profile || !professionalTimezone) throw new Error('PROFESSIONAL_UNAVAILABLE')
-        const today = localDateInTimezone(new Date(), professionalTimezone)
-        const nextSlots = await getAvailableSlots(professionalId, today)
+        const today = localDateFn(new Date(), professionalTimezone)
+        const nextSlots = await getSlots(professionalId, today)
         if (!active) return
         setProfessional(profile)
         setSettings(nextSettings)
@@ -82,7 +115,7 @@ export function AppointmentsPage() {
           setError(
             cause instanceof Error && cause.message.includes('PROFESSIONAL_UNAVAILABLE')
               ? 'Este profissional não está disponível para agendamentos.'
-              : schedulingErrorMessage(cause),
+              : errorFn(cause),
           )
       } finally {
         if (active) setLoading(false)
@@ -92,7 +125,7 @@ export function AppointmentsPage() {
     return () => {
       active = false
     }
-  }, [professionalId])
+  }, [professionalId, isMock, getVerifiedProf, getVerifiedProfs, getScheduler, getTimezone, getSlots, localDateFn, errorFn])
 
   async function confirmBooking() {
     if (!professionalId || !selectedSlot) return
@@ -105,26 +138,19 @@ export function AppointmentsPage() {
         : { startsAt: selectedSlot.starts_at, key: crypto.randomUUID() }
       idempotency.current = pendingRequest
       if (rescheduleId) {
-        await rescheduleAppointment(rescheduleId, selectedSlot.starts_at, pendingRequest.key)
+        await rescheduleFn(rescheduleId, selectedSlot.starts_at, pendingRequest.key)
         setSuccess(`Atendimento remarcado para ${dateLabel(selectedSlot.starts_at, timezone)}.`)
         setRescheduleId(null)
       } else {
-        await requestAppointment(professionalId, selectedSlot.starts_at, pendingRequest.key)
+        await requestAppointmentFn(professionalId, selectedSlot.starts_at, pendingRequest.key)
         setSuccess(`Solicitação enviada para ${dateLabel(selectedSlot.starts_at, timezone)}.`)
       }
       idempotency.current = null
       setSelectedSlot(null)
-      setSlots((current) => current.filter((slot) => slot.starts_at !== selectedSlot.starts_at))
+      const today = localDateFn(new Date(), timezone)
+      setSlots(await getSlots(professionalId, today))
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
-      if (professionalId) {
-        const today = localDateInTimezone(new Date(), timezone)
-        try {
-          setSlots(await getAvailableSlots(professionalId, today))
-        } catch {
-          setSlots((current) => current.filter((slot) => slot.starts_at !== selectedSlot.starts_at))
-        }
-      }
+      setError(errorFn(cause))
     } finally {
       setBusy(false)
     }
@@ -145,6 +171,24 @@ export function AppointmentsPage() {
       {success && <Notice kind="success" title="Solicitação registrada">{success}</Notice>}
       <div className="booking-layout">
         <div>
+          {!professionalId && isMock && professionals.length > 0 && (
+            <div className="professional-list">
+              <h2>Profissionais disponíveis</h2>
+              <div className="professional-cards">
+                {professionals.map((prof) => (
+                  <Link key={prof.id} to={`/agendar/${prof.id}`} className="professional-card">
+                    <span className="mini-portrait portrait-sage" aria-hidden="true">
+                      {prof.display_name.slice(0, 2).toLocaleUpperCase('pt-BR')}
+                    </span>
+                    <div>
+                      <h3>{prof.display_name}</h3>
+                      <p className="specialties">{prof.specialties.join(' · ')}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           {professional ? (
             <div className="booking-person">
               <span className="mini-portrait portrait-sage" aria-hidden="true">
@@ -156,14 +200,14 @@ export function AppointmentsPage() {
                 <p>{professional.specialties.join(' · ') || 'Psicologia'}</p>
               </div>
             </div>
-          ) : (
+          ) : !isMock && !professionalId ? (
             <div className="booking-prompt">
               <h2>Escolha um profissional</h2>
               <Link to="/profissionais" className="text-link">
                 Ver profissionais disponíveis ↗
               </Link>
             </div>
-          )}
+          ) : null}
           {settings && (
             <div className="booking-price">
               <span>Sessão de {settings.duration_minutes} minutos</span>
@@ -181,6 +225,8 @@ export function AppointmentsPage() {
                 if (!slot) idempotency.current = null
               }}
             />
+          ) : !professionalId && isMock && professionals.length === 0 ? (
+            <p className="muted-copy">Nenhum profissional verificado disponível.</p>
           ) : null}
           {selectedSlot && (
             <div className="booking-confirmation">

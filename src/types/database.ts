@@ -102,14 +102,12 @@ export interface Database {
         Row: SchedulerSettings & { id: boolean; updated_at: string }
         Insert: Partial<SchedulerSettings> & { id?: boolean }
         Update: Partial<SchedulerSettings>
-            Insert: never
-            Update: never
+      },
       professional_availability: {
         Row: ProfessionalAvailability
-        Insert: Omit<ProfessionalAvailability, 'id' | 'created_at' | 'updated_at'> & {
-            Insert: never
-            Update: never
-      }
+        Insert: Omit<ProfessionalAvailability, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<ProfessionalAvailability, 'id' | 'created_at' | 'updated_at'>>
+      },
       schedule_exceptions: {
         Row: ScheduleException
         Insert: Omit<ScheduleException, 'id' | 'created_at'> & { id?: string }
@@ -155,6 +153,7 @@ export interface Database {
         Insert: never
         Update: never
         Relationships: []
+      },
       get_available_slots: {
         Args: { professional_uuid: string; local_date: string }
         Returns: AvailableSlot[]

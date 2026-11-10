@@ -1,15 +1,22 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
 import { useAuth } from '../../app/providers/useAuth'
 import { getProfessionalProfile, saveProfessionalProfile } from '../auth/authService'
+import {
+  getProfessionalProfile as mockGetProfessionalProfile,
+  saveProfessionalProfile as mockSaveProfessionalProfile,
+} from '../auth/mockAuthService'
 import type { ProfessionalProfile } from '../../types/database'
 import type { AppointmentSummary } from '../../types/database'
 import { ProfessionalScheduleEditor } from '../appointments/ProfessionalScheduleEditor'
 import { getMyAppointments, schedulingErrorMessage, updateAppointmentStatus } from '../appointments/schedulingService'
-import { canJoinDemoSession } from '../video-session/sessionEligibility'
+import {
+  getMyAppointments as mockGetMyAppointments,
+  schedulingErrorMessage as mockSchedulingErrorMessage,
+  updateAppointmentStatus as mockUpdateAppointmentStatus,
+} from '../appointments/mockSchedulingService'
 
 const appointmentStatusLabels = {
   requested: 'Solicitado',
@@ -28,6 +35,7 @@ const emptyProfile: Pick<
 > = { presentation: '', specialties: [], registration_number: null, accessibility_modalities: [] }
 export function PsychologistDashboardPage() {
   const auth = useAuth()
+  const isMock = typeof auth.loginAs === 'function'
   const [profile, setProfile] = useState(emptyProfile)
   const [verificationStatus, setVerificationStatus] = useState('pendente')
   const [specialties, setSpecialties] = useState('')
@@ -38,9 +46,16 @@ export function PsychologistDashboardPage() {
   const [appointments, setAppointments] = useState<AppointmentSummary[]>([])
   const [appointmentsLoading, setAppointmentsLoading] = useState(true)
   const [appointmentAction, setAppointmentAction] = useState('')
+
+  const getAppointmentsFn = isMock ? mockGetMyAppointments : getMyAppointments
+  const updateStatusFn = isMock ? mockUpdateAppointmentStatus : updateAppointmentStatus
+  const errorFn = isMock ? mockSchedulingErrorMessage : schedulingErrorMessage
+  const getProfProfileFn = isMock ? mockGetProfessionalProfile : getProfessionalProfile
+  const saveProfProfileFn = isMock ? mockSaveProfessionalProfile : saveProfessionalProfile
+
   useEffect(() => {
     let active = true
-    void getProfessionalProfile(auth.user!.id)
+    void getProfProfileFn(auth.user!.id)
       .then((data) => {
         if (!active || !data) return
         setProfile(data)
@@ -58,15 +73,15 @@ export function PsychologistDashboardPage() {
     return () => {
       active = false
     }
-  }, [auth.user])
+  }, [auth.user, isMock])
   useEffect(() => {
     let active = true
-    void getMyAppointments()
+    void getAppointmentsFn()
       .then((data) => {
         if (active) setAppointments(data)
       })
       .catch((cause: unknown) => {
-        if (active) setError(schedulingErrorMessage(cause))
+        if (active) setError(errorFn(cause))
       })
       .finally(() => {
         if (active) setAppointmentsLoading(false)
@@ -74,14 +89,14 @@ export function PsychologistDashboardPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [isMock])
   async function save(event: FormEvent) {
     event.preventDefault()
     setError('')
     setSuccess('')
     try {
       setProfile(
-        await saveProfessionalProfile({
+        await saveProfProfileFn({
           ...profile,
           specialties: specialties
             .split(',')
@@ -112,11 +127,11 @@ export function PsychologistDashboardPage() {
     setError('')
     setSuccess('')
     try {
-      await updateAppointmentStatus(id, status)
-      setAppointments(await getMyAppointments())
+      await updateStatusFn(id, status)
+      setAppointments(await getAppointmentsFn())
       setSuccess('Status do atendimento atualizado.')
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
+      setError(errorFn(cause))
     } finally {
       setAppointmentAction('')
     }
@@ -202,9 +217,6 @@ export function PsychologistDashboardPage() {
                 </div>
                 <span className={`status-badge status-${appointment.status}`}>{appointmentStatusLabels[appointment.status]}</span>
                 <div className="agenda-actions">
-                  {canJoinDemoSession(appointment) && (
-                    <Link className="text-link" to={`/sessao-online/${appointment.id}`}>Entrar na sala de teste</Link>
-                  )}
                   {appointment.status === 'requested' && (
                     <Button type="button" disabled={appointmentAction === appointment.id} onClick={() => void updateAppointment(appointment.id, 'confirmed')}>Confirmar</Button>
                   )}

@@ -23,7 +23,7 @@ const questions = [
   {
     question: 'As legendas funcionam em qualquer navegador?',
     answer:
-      'Não. O reconhecimento depende do suporte local a português brasileiro no navegador e no dispositivo. Quando não está disponível, não usamos reconhecimento em nuvem. As legendas são experimentais e não substituem intérprete de Libras.',
+      'Não. O reconhecimento depende do suporte local a português brasileiro no navegador e no dispositivo. Quando não está disponível, não usamos reconhecimento em nuvem. As legendas são experimentais.',
   },
 ]
 

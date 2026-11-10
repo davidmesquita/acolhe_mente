@@ -13,6 +13,7 @@ export interface AuthContextValue {
   refreshProfile: () => Promise<void>
   clearSessionExpired: () => void
   logout: () => Promise<void>
+  loginAs?: (role: 'patient' | 'psychologist') => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

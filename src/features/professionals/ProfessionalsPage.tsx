@@ -2,10 +2,7 @@ import { useEffect, useState } from 'react'
 import { ButtonLink } from '../../components/ui/ButtonLink'
 import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
-import { ProfessionalCard } from '../../components/ui/ProfessionalCard'
 import { SearchFilters, type ProfessionalFilters } from '../../components/ui/SearchFilters'
-import { filterProfessionals } from './filterProfessionals'
-import { professionals } from './data'
 import { requireSupabase, supabaseConfigured } from '../../lib/supabaseClient'
 import { formatCurrency } from '../../lib/formatCurrency'
 import { getSchedulerSettings } from '../appointments/schedulingService'
@@ -14,7 +11,6 @@ import type { SchedulerSettings, VerifiedProfessional } from '../../types/databa
 const emptyFilters: ProfessionalFilters = {
   specialty: '',
   availability: '',
-  accessibility: '',
   communication: '',
   online: true,
 }
@@ -26,16 +22,6 @@ export function ProfessionalsPage() {
   const [settings, setSettings] = useState<SchedulerSettings | null>(null)
   const [loading, setLoading] = useState(supabaseConfigured)
   const [serviceError, setServiceError] = useState('')
-  const results = filterProfessionals(professionals, query, filters)
-  const verifiedResults = verified.filter((person) => {
-    const searchable = `${person.display_name} ${person.presentation} ${person.specialties.join(' ')}`
-      .toLocaleLowerCase('pt-BR')
-    return (
-      (!query.trim() || searchable.includes(query.trim().toLocaleLowerCase('pt-BR'))) &&
-      (!filters.specialty || person.specialties.includes(filters.specialty)) &&
-      (!filters.accessibility || person.accessibility_modalities.includes(filters.accessibility))
-    )
-  })
 
   useEffect(() => {
     if (!supabaseConfigured) return
@@ -63,6 +49,15 @@ export function ProfessionalsPage() {
       active = false
     }
   }, [])
+
+  const verifiedResults = verified.filter((person) => {
+    const searchable = `${person.display_name} ${person.presentation} ${person.specialties.join(' ')}`
+      .toLocaleLowerCase('pt-BR')
+    return (
+      (!query.trim() || searchable.includes(query.trim().toLocaleLowerCase('pt-BR'))) &&
+      (!filters.specialty || person.specialties.includes(filters.specialty))
+    )
+  })
 
   return (
     <section className="section inner-page search-page">
@@ -107,36 +102,8 @@ export function ProfessionalsPage() {
             </article>
           ))}
         </div>
-      ) : <p className="muted-copy">Nenhum profissional verificado corresponde à busca.</p>}
-      <div className="results-heading demo-results-heading">
-        <h2>Perfis de demonstração</h2>
-        <span>{results.length} {results.length === 1 ? 'perfil' : 'perfis'} · não reserváveis</span>
-      </div>
-      <Notice title="Demonstrações fictícias">
-        Os perfis abaixo não representam profissionais reais nem têm agenda conectada.
-      </Notice>
-      {results.length ? (
-        <div className="professional-grid">
-          {results.map((person) => (
-            <ProfessionalCard key={person.id} professional={person} />
-          ))}
-        </div>
       ) : (
-        <div className="empty-state">
-          <span aria-hidden="true">⌕</span>
-          <h2>Nenhum perfil por aqui</h2>
-          <p>Tente outro termo ou remova alguns filtros.</p>
-          <button
-            type="button"
-            className="text-button"
-            onClick={() => {
-              setFilters(emptyFilters)
-              setQuery('')
-            }}
-          >
-            Limpar busca e filtros
-          </button>
-        </div>
+        <p className="muted-copy">Nenhum profissional verificado corresponde à busca.</p>
       )}
     </section>
   )

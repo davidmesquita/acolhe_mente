@@ -6,8 +6,12 @@ import { FormField } from '../../components/ui/FormField'
 import { Notice } from '../../components/ui/Notice'
 import type { AppointmentSummary } from '../../types/database'
 import { cancelAppointment, getMyAppointments, schedulingErrorMessage } from '../appointments/schedulingService'
+import {
+  cancelAppointment as mockCancelAppointment,
+  getMyAppointments as mockGetMyAppointments,
+  schedulingErrorMessage as mockSchedulingErrorMessage,
+} from '../appointments/mockSchedulingService'
 import { updateDisplayName } from '../auth/authService'
-import { canJoinDemoSession } from '../video-session/sessionEligibility'
 
 const statusLabels = {
   requested: 'Solicitado',
@@ -28,29 +32,35 @@ function formatAppointment(date: string) {
 
 export function PatientDashboardPage() {
   const auth = useAuth()
+  const isMock = typeof auth.loginAs === 'function'
   const [name, setName] = useState(auth.profile?.display_name ?? '')
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
   const [appointments, setAppointments] = useState<AppointmentSummary[]>([])
   const [appointmentsLoading, setAppointmentsLoading] = useState(true)
   const [cancelling, setCancelling] = useState('')
+
+  const getAppointmentsFn = isMock ? mockGetMyAppointments : getMyAppointments
+  const cancelFn = isMock ? mockCancelAppointment : cancelAppointment
+  const errorFn = isMock ? mockSchedulingErrorMessage : schedulingErrorMessage
+
   useEffect(() => {
     let active = true
-    void getMyAppointments()
+    void getAppointmentsFn()
       .then((data) => {
         if (active) setAppointments(data)
       })
       .catch((cause: unknown) => {
-        if (active) setError(schedulingErrorMessage(cause))
+        if (active) setError(errorFn(cause))
       })
       .finally(() => {
         if (active) setAppointmentsLoading(false)
-        // import { Link } from 'react-router-dom'
       })
     return () => {
       active = false
     }
-  }, [])
+  }, [isMock])
+
   async function save(event: FormEvent) {
     event.preventDefault()
     setError('')
@@ -75,11 +85,11 @@ export function PatientDashboardPage() {
     setError('')
     setSuccess('')
     try {
-      await cancelAppointment(id)
-      setAppointments(await getMyAppointments())
+      await cancelFn(id)
+      setAppointments(await getAppointmentsFn())
       setSuccess('Atendimento cancelado.')
     } catch (cause) {
-      setError(schedulingErrorMessage(cause))
+      setError(errorFn(cause))
     } finally {
       setCancelling('')
     }
@@ -115,11 +125,8 @@ export function PatientDashboardPage() {
                 <p>{formatAppointment(appointment.starts_at)} · {appointment.duration_minutes} min</p>
               </div>
               <span className={`status-badge status-${appointment.status}`}>{statusLabels[appointment.status]}</span>
-              {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() || canJoinDemoSession(appointment) ? (
+              {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() ? (
                 <div className="appointment-actions">
-                  {canJoinDemoSession(appointment) && (
-                    <Link className="text-link" to={`/sessao-online/${appointment.id}`}>Entrar na sala de teste</Link>
-                  )}
                   {['requested', 'confirmed'].includes(appointment.status) && new Date(appointment.starts_at) > new Date() && (
                     <>
                       <Link className="text-link" to={`/agendar/${appointment.professional_id}`} state={{ rescheduleId: appointment.id }}>
